@@ -30,6 +30,9 @@
                     <p>Don't have an account?&nbsp;</p>
                     <a href="{{url_for('register')}}">Sign up</a>
                 </div>
+                {% if errorMessage%}
+                    <p class="text-center text-danger">{{errorMessage}}</p>
+                {% endif %}
             </form>
         </div>
     </div>
