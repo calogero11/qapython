@@ -34,22 +34,40 @@
                 <thead class="thead-dark">
                     <tr>
                         <th scope="col">Task</th>
+                        <th scope="col">UserId</th>
                         <th scope="col">Added</th>
+                        <th scope="col">Completed</th>
                         <th scope="col">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                 {% for task in tasks %}
                     <tr>
+
                         <td>{{ task.content }}</td>
+                        <td>{{ task.user_id }}</td>
                         <td>{{ task.date_created.date() }}</td>
+                        <td>
+                            {% if task.date_completed %}
+                                {{ task.date_completed.date() }}
+                            {% else %}
+                                <p>N/a</p>
+                            {% endif %}
+                            
+                        </td>
                         <td class="d-flex">
+                            {% if current_user.admin == True %}
                             <a class="me-3" href="/delete/{{ task.id }}">
                                 <i class="btn btn-outline-danger bi bi-trash"></i>
                             </a>
+                            {% endif %}
                             <br>
-                            <a href="/update/{{ task.id }}"> 
-                                <i class="btn btn-outline-success bi bi-pencil"></i>
+                            <a class="me-3" href="/update/{{ task.id }}"> 
+                                <i class="btn btn-outline-primary bi bi-pencil"></i>
+                            </a>
+                            <br>
+                            <a href="/complete/{{ task.id }}"> 
+                                <i class="btn btn-outline-success bi bi-check"></i>
                             </a>
                         </td>
                     </tr>

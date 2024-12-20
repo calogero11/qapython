@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import InputRequired, Length, ValidationError
 from flask_bcrypt import Bcrypt
 
@@ -27,12 +27,14 @@ class User (db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(30), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=False)
+    admin = db.Column(db.Boolean, default=False)
 
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String(200), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     date_created = db.Column(db.DateTime, default=datetime.utcnow) 
+    date_completed = db.Column(db.DateTime, nullable=True)
 
     def __repr__(self):
         return '<Task %r>' % self.id
@@ -41,6 +43,7 @@ class Todo(db.Model):
 class RegisterForm(FlaskForm):
     username = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Username"})
     password = PasswordField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Password"})
+    admin = BooleanField('Admin mode?')
     submit = SubmitField("Sign up")
 
     def validate_username(self, username):
@@ -83,7 +86,7 @@ def register():
 
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data)
-        new_user = User(username=form.username.data, password=hashed_password)
+        new_user = User(username=form.username.data, password=hashed_password, admin=form.admin.data)
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('login'))
@@ -105,7 +108,11 @@ def index():
             return 'There was an issue adding your task'
 
     else:
-        tasks = Todo.query.filter_by(user_id=current_user.get_id()).all()
+        if current_user.admin == False:
+            tasks = Todo.query.filter_by(user_id=current_user.get_id()).all()
+        else:
+            tasks = Todo.query.all()
+        
         return render_template('index.html', tasks=tasks)
 
 @app.route('/delete/<int:id>')
@@ -141,6 +148,23 @@ def update(id):
             return 'There was an issue updating your task'
     else:
         return render_template('update.html', task=task)
+    
+@app.route('/complete/<int:id>')
+@login_required
+def complete(id):
+    task = Todo.query.get_or_404(id)
+
+    if str(task.user_id) != str(current_user.get_id()):
+            return 'You are unauthorised'
+
+    task.date_completed = datetime.now()
+        
+    try:
+        db.session.commit()
+        return redirect(url_for('index'))
+    except:
+        return 'There was an issue updating your task'
+
 
 if __name__ == "__main__":
     with app.app_context():
