@@ -48,6 +48,11 @@ Finally, execute the following command to reverse the proxy
 
 Once this is complete you can follow the Running app locally instructions to run the app on AWS EC2
 
+# Running Unit Test
+In order to run the unit tests your can run the command 
+
+    python -m unittest .\tests\test_app.py
+
 # Troubleshooting
 If you are having issues with running the project and you are encountering issues that state you do not have python, pip or any other tools installed you can remove the env folder by running
 
